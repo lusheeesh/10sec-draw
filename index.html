@@ -6,119 +6,122 @@
     <title>10-Second Drawing Challenge</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        /* Custom Fonts & Base Styles */
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap');
+        
         body {
             font-family: 'Nunito', sans-serif;
             background-color: #f0fdf4;
             background-image: radial-gradient(#bbf7d0 1px, transparent 1px);
             background-size: 20px 20px;
-            overscroll-behavior-y: contain;
-            min-height: 100vh;
-            overflow-x: hidden;
-            overflow-y: auto;
+            overscroll-behavior-y: contain; /* Prevent pull-to-refresh on mobile */
         }
-        html {
-            min-height: 100%;
-            overflow-y: auto;
-            scroll-behavior: smooth;
+
+        /* Canvas Styles */
+        #drawingCanvas {
+            touch-action: none; /* Prevent scrolling when drawing on touch devices */
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
         }
-        main {
-            padding-bottom: 70px;
+
+        /* Animations */
+        @keyframes pulse-fast {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
         }
-        #aiResponseContainer {
-            margin-top: 35px;
-            margin-bottom: 45px;
+        .animate-pulse-fast {
+            animation: pulse-fast 1s infinite;
         }
-        #aiText {
-            max-height: none;
-            overflow: visible;
-            white-space: pre-wrap;
-            line-height: 1.8;
-            font-size: 1.05rem;
-        }
-        #postGameControls {
-            margin-top: 30px;
-            flex-wrap: wrap;
-        }
-        #canvasContainer {
-            flex-shrink: 0;
-            touch-action: none;
+
+        @keyframes popIn {
+            0% { opacity: 0; transform: scale(0.9) translateY(10px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
         }
         .pop-in {
             animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
         }
-        @keyframes popIn {
-            from { opacity: 0; transform: scale(0.95) translateY(10px); }
-            to { opacity: 1; transform: scale(1) translateY(0); }
-        }
     </style>
 </head>
-<body class="flex flex-col items-center py-8 px-4 text-slate-800">
-    
-    <main class="w-full max-w-xl flex flex-col items-center">
-        
-        <h1 class="text-3xl font-black text-green-600 mb-2 text-center tracking-tight">10-Second Sketch</h1>
-        <p class="text-slate-500 font-bold mb-8 text-center uppercase tracking-widest text-xs">Draw fast. Let AI judge.</p>
+<body class="min-h-screen flex flex-col text-slate-800">
 
-        <div id="gameHeader" class="w-full flex justify-between items-end mb-3 hidden">
+    <!-- Header -->
+    <header class="w-full p-4 text-center">
+        <h1 class="text-3xl md:text-4xl font-black text-green-600 drop-shadow-sm tracking-tight">
+            ⏱️ 10-Second Sketch
+        </h1>
+        <p class="text-slate-500 font-bold mt-1">Ready, Set, Draw!</p>
+    </header>
+
+    <!-- Main Game Area -->
+    <main class="flex-grow flex flex-col items-center w-full max-w-3xl mx-auto px-4 pb-12">
+        
+        <!-- Game Info Bar -->
+        <div class="w-full flex justify-between items-end mb-3 px-2">
             <div class="flex flex-col">
-                <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Draw</span>
-                <span id="promptText" class="text-xl font-black text-green-600"></span>
+                <span class="text-sm font-bold text-slate-400 uppercase tracking-wider">Draw:</span>
+                <span id="promptDisplay" class="text-2xl md:text-3xl font-black text-slate-800 leading-none">???</span>
             </div>
             <div class="flex flex-col items-end">
-                <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Time</span>
-                <span id="timeText" class="text-3xl font-black text-slate-800 tabular-nums">10.0</span>
+                <span class="text-sm font-bold text-slate-400 uppercase tracking-wider">Time:</span>
+                <span id="timerDisplay" class="text-3xl md:text-4xl font-black text-green-500 leading-none transition-colors duration-300">10s</span>
             </div>
         </div>
 
-        <div id="canvasContainer" class="relative w-full aspect-square bg-white rounded-3xl shadow-xl border-4 border-green-100 overflow-hidden">
-            <canvas id="canvas" class="absolute inset-0 w-full h-full cursor-crosshair"></canvas>
+        <!-- Canvas Container -->
+        <div class="relative w-full aspect-[4/3] md:aspect-[16/9] bg-white rounded-2xl overflow-hidden border-4 border-slate-200" id="canvasContainer">
+            <canvas id="drawingCanvas" class="w-full h-full cursor-crosshair"></canvas>
             
-            <div id="startOverlay" class="absolute inset-0 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center">
-                <button id="startBtn" class="bg-green-500 hover:bg-green-600 text-white font-black py-4 px-8 rounded-2xl shadow-lg transition-transform hover:scale-105 active:scale-95 text-xl tracking-wide">
-                    Start Challenge
+            <!-- Start Overlay -->
+            <div id="startOverlay" class="absolute inset-0 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center z-10 transition-opacity duration-300">
+                <button id="startBtn" class="bg-green-500 hover:bg-green-600 text-white text-xl md:text-2xl font-black py-4 px-8 rounded-full shadow-[0_6px_0_#16a34a] hover:shadow-[0_4px_0_#16a34a] hover:translate-y-[2px] transition-all animate-pulse-fast">
+                    Start Challenge!
                 </button>
+                <p class="mt-4 text-slate-600 font-bold text-center px-6">You will have exactly 10 seconds.<br>No undo. No eraser. Good luck.</p>
             </div>
-            
-            <div id="lockOverlay" class="absolute inset-0 bg-slate-900/10 backdrop-blur-sm hidden flex-col items-center justify-center">
-                <div class="bg-white px-8 py-4 rounded-2xl font-black text-slate-700 shadow-xl text-xl tracking-wide">
-                    ⏱️ Time's Up!
-                </div>
-            </div>
+
+            <!-- Ended Overlay (Subtle tint) -->
+            <div id="endedOverlay" class="absolute inset-0 bg-slate-900/5 z-10 hidden pointer-events-none transition-opacity duration-300"></div>
         </div>
 
-        <div id="postGameControls" class="w-full hidden flex-col gap-3 mt-6">
-            <button id="aiGuessBtn" class="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-black py-4 px-6 rounded-2xl shadow-md transition-colors text-lg tracking-wide">
-                🤖 Submit to AI Judge
+        <!-- Post Game Controls -->
+        <div id="postGameControls" class="w-full mt-6 hidden flex-col sm:flex-row gap-4 justify-center pop-in">
+            <button id="downloadBtn" class="flex-1 bg-white border-2 border-slate-200 hover:border-slate-300 text-slate-700 font-bold py-3 px-6 rounded-xl shadow-sm transition-all flex items-center justify-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                Save PNG
             </button>
-            <div class="w-full flex gap-3">
-                <button id="downloadBtn" class="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-6 rounded-2xl shadow-md transition-colors">
-                    💾 Save Card
-                </button>
-                <button id="restartBtn" class="flex-1 bg-white hover:bg-slate-50 text-slate-700 border-2 border-slate-200 font-bold py-4 px-6 rounded-2xl shadow-sm transition-colors">
-                    🔄 Retry
-                </button>
-            </div>
+            <button id="aiGuessBtn" class="flex-1 bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 px-6 rounded-xl shadow-[0_4px_0_#4338ca] hover:shadow-[0_2px_0_#4338ca] hover:translate-y-[2px] transition-all flex items-center justify-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>
+                Let AI Judge
+            </button>
+            <button id="restartBtn" class="flex-1 bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 px-6 rounded-xl shadow-[0_4px_0_#0f172a] hover:shadow-[0_2px_0_#0f172a] hover:translate-y-[2px] transition-all flex items-center justify-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                Play Again
+            </button>
         </div>
 
-        <div id="aiResponseContainer" class="w-full mt-8 mb-12 hidden pop-in">
-            <div class="bg-indigo-50 border-2 border-indigo-100 rounded-3xl p-6 md:p-8 relative">
+        <!-- AI Response Box -->
+        <div id="aiResponseContainer" class="w-full mt-6 hidden pop-in">
+            <div class="bg-indigo-50 border-2 border-indigo-100 rounded-2xl p-6 md:p-8 relative w-full">
                 
-                <div class="absolute -top-4 left-6 bg-indigo-500 text-white text-xs font-black px-4 py-2 rounded-full uppercase tracking-widest shadow-sm">
+                <div class="absolute -top-3 left-6 bg-indigo-500 text-white text-xs font-bold px-4 py-1 rounded-full uppercase tracking-wide shadow-sm">
                     🤖 AI Judge
                 </div>
 
-                <div id="aiLoading" class="hidden flex-col items-center text-indigo-400 font-bold py-8 text-center gap-4">
-                    <div class="text-4xl animate-pulse">🎨</div>
+                <div id="aiLoading" class="hidden flex-col items-center text-indigo-400 font-bold py-8 text-center gap-4 animate-pulse">
+                    <div class="text-5xl">🎨</div>
                     The judge is examining your masterpiece...
                 </div>
 
                 <div id="aiResultContent" class="hidden flex-col">
                     <div id="aiScore" class="text-center mb-6">
                         <div class="text-xs uppercase tracking-widest font-black text-indigo-400">Your artistic score</div>
-                        <div id="aiScoreValue" class="text-7xl font-black text-indigo-600 my-2 tracking-tighter">--/10</div>
+                        <div id="aiScoreValue" class="text-6xl md:text-7xl font-black text-indigo-600 my-2 tracking-tighter">--/10</div>
                         <div id="aiScoreLabel" class="text-sm font-bold text-indigo-400">Certified masterpiece?</div>
                     </div>
-                    <div id="aiText" class="text-slate-700 leading-relaxed font-medium"></div>
+                    
+                    <!-- Box expands freely now to fit the text -->
+                    <div id="aiText" class="text-slate-700 text-[1.05rem] leading-relaxed font-medium">
+                        <!-- AI response goes here -->
+                    </div>
                 </div>
 
             </div>
@@ -127,29 +130,43 @@
     </main>
 
     <script>
-        const prompts = ["A bicycle", "A confused cat", "A smartphone", "A coffee cup", "A haunted house", "An astronaut", "A slice of pizza", "A luxury car", "A sword", "A gaming controller"];
-        
+        /**
+         * 10-Second Drawing Challenge Logic
+         */
+        const prompts = [
+            "a bicycle", "a grumpy cat", "a hotdog", "an alien spaceship", 
+            "a snowman", "a guitar", "a pair of scissors", "a slice of pizza", 
+            "a coffee mug", "a palm tree", "a pineapple", "a spider", 
+            "a wizard hat", "a turtle", "a ghost", "a hamburger"
+        ];
+
+        // State
         let currentPrompt = "";
-        let timeLeft = 10.0;
+        let timeLeft = 10;
         let timerInterval = null;
         let isDrawing = false;
-        let gameActive = false;
+        let gameState = 'initial';
+        
         let currentRating = null;
         let currentReview = "";
         let ratingIsProvisional = false;
-
-        const canvas = document.getElementById('canvas');
+        
+        // DOM Elements
+        const canvas = document.getElementById('drawingCanvas');
         const ctx = canvas.getContext('2d');
-        const startBtn = document.getElementById('startBtn');
+        const canvasContainer = document.getElementById('canvasContainer');
+        const promptDisplay = document.getElementById('promptDisplay');
+        const timerDisplay = document.getElementById('timerDisplay');
+        
         const startOverlay = document.getElementById('startOverlay');
-        const lockOverlay = document.getElementById('lockOverlay');
-        const gameHeader = document.getElementById('gameHeader');
-        const promptText = document.getElementById('promptText');
-        const timeText = document.getElementById('timeText');
-        const postGameControls = document.getElementById('postGameControls');
-        const aiGuessBtn = document.getElementById('aiGuessBtn');
+        const endedOverlay = document.getElementById('endedOverlay');
+        
+        const startBtn = document.getElementById('startBtn');
         const downloadBtn = document.getElementById('downloadBtn');
+        const aiGuessBtn = document.getElementById('aiGuessBtn');
         const restartBtn = document.getElementById('restartBtn');
+        const postGameControls = document.getElementById('postGameControls');
+        
         const aiResponseContainer = document.getElementById('aiResponseContainer');
         const aiLoading = document.getElementById('aiLoading');
         const aiResultContent = document.getElementById('aiResultContent');
@@ -157,101 +174,148 @@
         const aiScoreLabel = document.getElementById('aiScoreLabel');
         const aiText = document.getElementById('aiText');
 
+        // --- Canvas Setup & Drawing Logic ---
+
         function resizeCanvas() {
-            const rect = canvas.parentElement.getBoundingClientRect();
-            canvas.width = rect.width;
-            canvas.height = rect.height;
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
-            ctx.lineWidth = 6;
-            ctx.strokeStyle = '#0f172a';
+            const rect = canvasContainer.getBoundingClientRect();
+            
+            if (gameState !== 'playing') {
+                canvas.width = rect.width;
+                canvas.height = rect.height;
+                
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.lineWidth = 6;
+                ctx.strokeStyle = '#0f172a'; 
+                
+                fillWhiteBackground();
+            }
+        }
+
+        function fillWhiteBackground() {
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
         }
 
         window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
 
-        function startGame() {
-            startOverlay.classList.add('hidden');
-            lockOverlay.classList.add('hidden');
-            gameHeader.classList.remove('hidden');
-            gameHeader.classList.add('flex');
+        function getCoordinates(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            
+            return {
+                x: (clientX - rect.left) * (canvas.width / rect.width),
+                y: (clientY - rect.top) * (canvas.height / rect.height)
+            };
+        }
+
+        function startDrawing(e) {
+            if (gameState !== 'playing') return;
+            e.preventDefault();
+            isDrawing = true;
+            const { x, y } = getCoordinates(e);
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+        }
+
+        function draw(e) {
+            if (!isDrawing || gameState !== 'playing') return;
+            e.preventDefault();
+            const { x, y } = getCoordinates(e);
+            ctx.lineTo(x, y);
+            ctx.stroke();
+        }
+
+        function stopDrawing(e) {
+            if (!isDrawing) return;
+            e.preventDefault();
+            isDrawing = false;
+            ctx.closePath();
+        }
+
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseout', stopDrawing);
+
+        canvas.addEventListener('touchstart', startDrawing, { passive: false });
+        canvas.addEventListener('touchmove', draw, { passive: false });
+        canvas.addEventListener('touchend', stopDrawing, { passive: false });
+
+        // --- Game Flow Logic ---
+
+        function pickRandomPrompt() {
+            const index = Math.floor(Math.random() * prompts.length);
+            return prompts[index];
+        }
+
+        function initGame() {
+            resizeCanvas();
+            currentPrompt = pickRandomPrompt();
+            promptDisplay.textContent = currentPrompt;
+            timeLeft = 10;
+            updateTimerDisplay();
+            
+            gameState = 'initial';
+            currentRating = null;
+            currentReview = "";
+            ratingIsProvisional = false;
+            
+            startOverlay.classList.remove('hidden');
+            endedOverlay.classList.add('hidden');
             postGameControls.classList.add('hidden');
             postGameControls.classList.remove('flex');
+            
             aiResponseContainer.classList.add('hidden');
+            aiResultContent.classList.add('hidden');
+            aiResultContent.classList.remove('flex');
             
-            resizeCanvas();
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            currentPrompt = prompts[Math.floor(Math.random() * prompts.length)];
-            promptText.textContent = currentPrompt;
-            
-            timeLeft = 10.0;
-            timeText.textContent = "10.0";
-            timeText.classList.remove('text-red-500');
-            
-            gameActive = true;
+            timerDisplay.classList.remove('text-red-500', 'animate-pulse');
+            timerDisplay.classList.add('text-green-500');
+            canvas.classList.add('cursor-crosshair');
+            canvas.classList.remove('cursor-not-allowed');
+        }
+
+        function startGame() {
+            gameState = 'playing';
+            startOverlay.classList.add('hidden');
+            fillWhiteBackground(); 
             
             timerInterval = setInterval(() => {
-                timeLeft -= 0.1;
+                timeLeft--;
+                updateTimerDisplay();
+                
+                if (timeLeft <= 3) {
+                    timerDisplay.classList.remove('text-green-500');
+                    timerDisplay.classList.add('text-red-500', 'animate-pulse');
+                }
+                
                 if (timeLeft <= 0) {
-                    timeLeft = 0;
                     endGame();
                 }
-                timeText.textContent = timeLeft.toFixed(1);
-                if (timeLeft <= 3) timeText.classList.add('text-red-500');
-            }, 100);
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            timerDisplay.textContent = `${timeLeft}s`;
         }
 
         function endGame() {
             clearInterval(timerInterval);
-            gameActive = false;
+            gameState = 'ended';
             isDrawing = false;
-            lockOverlay.classList.remove('hidden');
-            lockOverlay.classList.add('flex');
+            
+            endedOverlay.classList.remove('hidden');
+            canvas.classList.remove('cursor-crosshair');
+            canvas.classList.add('cursor-not-allowed');
+            timerDisplay.classList.remove('animate-pulse');
+            
             postGameControls.classList.remove('hidden');
             postGameControls.classList.add('flex');
         }
 
-        function getPos(e) {
-            const rect = canvas.getBoundingClientRect();
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            return { x: clientX - rect.left, y: clientY - rect.top };
-        }
-
-        function startPosition(e) {
-            if (!gameActive) return;
-            e.preventDefault();
-            isDrawing = true;
-            const pos = getPos(e);
-            ctx.beginPath();
-            ctx.moveTo(pos.x, pos.y);
-        }
-
-        function endPosition() {
-            isDrawing = false;
-            ctx.beginPath();
-        }
-
-        function draw(e) {
-            if (!isDrawing || !gameActive) return;
-            e.preventDefault();
-            const pos = getPos(e);
-            ctx.lineTo(pos.x, pos.y);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(pos.x, pos.y);
-        }
-
-        canvas.addEventListener('mousedown', startPosition);
-        canvas.addEventListener('mouseup', endPosition);
-        canvas.addEventListener('mousemove', draw);
-        canvas.addEventListener('touchstart', startPosition, { passive: false });
-        canvas.addEventListener('touchend', endPosition);
-        canvas.addEventListener('touchmove', draw, { passive: false });
-
-        startBtn.addEventListener('click', startGame);
-        restartBtn.addEventListener('click', startGame);
+        // --- Post Game Actions ---
 
         function getRatingLabel(score) {
             if (score >= 9) return "🏆 Legendary masterpiece!";
@@ -265,9 +329,11 @@
         async function letAIGuess() {
             aiGuessBtn.disabled = true;
             aiGuessBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            
             aiResponseContainer.classList.remove('hidden');
             aiLoading.classList.remove('hidden');
             aiLoading.classList.add('flex');
+            
             aiResultContent.classList.add('hidden');
             aiResultContent.classList.remove('flex');
             
@@ -275,6 +341,7 @@
             currentReview = "";
             ratingIsProvisional = false;
 
+            // Make sure background is perfectly white for the AI API
             const tempCanvas = document.createElement('canvas');
             tempCanvas.width = canvas.width;
             tempCanvas.height = canvas.height;
@@ -283,8 +350,8 @@
             tCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
             tCtx.drawImage(canvas, 0, 0);
             
-            const base64Data = tempCanvas.toDataURL("image/png").split(",")[1];
-
+            const base64Data = tempCanvas.toDataURL('image/png').split(',')[1];
+            
             try {
                 const response = await fetch("/api/judge", {
                     method: "POST",
@@ -298,6 +365,7 @@
                 currentRating = Math.round(result.rating * 10) / 10;
                 let review = result.commentary;
 
+                // Censor the actual prompt so they can't cheat on the share card
                 if (currentPrompt) {
                     const escaped = currentPrompt.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
                     review = review.replace(new RegExp(escaped, "gi"), "[REDACTED]");
@@ -306,7 +374,7 @@
 
             } catch (error) {
                 currentRating = 5;
-                currentReview = "The AI judge couldn't connect right now! You get a temporary score.";
+                currentReview = "The AI judge couldn't connect right now! The servers refuse to process this drawing. You get a temporary score.";
                 ratingIsProvisional = true;
             }
 
@@ -316,6 +384,7 @@
             
             aiLoading.classList.add('hidden');
             aiLoading.classList.remove('flex');
+            
             aiResultContent.classList.remove('hidden');
             aiResultContent.classList.add('flex');
             
@@ -323,8 +392,7 @@
             aiGuessBtn.classList.remove('opacity-50', 'cursor-not-allowed');
         }
 
-        aiGuessBtn.addEventListener('click', letAIGuess);
-
+        // Share Card Builder
         function roundedBox(ctx, x, y, w, h, radius, color) {
             ctx.beginPath();
             ctx.roundRect(x, y, w, h, radius);
@@ -333,16 +401,20 @@
         }
 
         async function downloadCanvas() {
-            if (currentRating === null) await letAIGuess();
+            if (currentRating === null) {
+                await letAIGuess();
+            }
 
             const output = document.createElement("canvas");
             const oCtx = output.getContext("2d");
             output.width = 1200;
             output.height = 1150;
 
+            // Background
             oCtx.fillStyle = "#f0fdf4";
             oCtx.fillRect(0, 0, output.width, output.height);
 
+            // Dots pattern
             for (let x = 20; x < 1200; x += 40) {
                 for (let y = 20; y < 1150; y += 40) {
                     oCtx.fillStyle = "#bbf7d0";
@@ -352,6 +424,7 @@
                 }
             }
 
+            // Main White Card
             roundedBox(oCtx, 55, 45, 1090, 1060, 35, "#ffffff");
 
             oCtx.textAlign = "center";
@@ -363,6 +436,7 @@
             oCtx.font = "700 27px Nunito, sans-serif";
             oCtx.fillText("⏱️ THE 10-SECOND SKETCH CHALLENGE", 600, 190);
 
+            // Drawing Area border
             roundedBox(oCtx, 105, 230, 990, 580, 20, "#f8fafc");
             
             oCtx.strokeStyle = "#e2e8f0";
@@ -384,6 +458,7 @@
 
             oCtx.drawImage(tempForExport, 600 - drawWidth / 2, 520 - drawHeight / 2, drawWidth, drawHeight);
 
+            // Rating Badge
             roundedBox(oCtx, 105, 835, 990, 155, 22, "#eef2ff");
 
             oCtx.fillStyle = "#6366f1";
@@ -403,12 +478,21 @@
             oCtx.fillText(`Try the challenge yourself: ${window.location.origin}`, 600, 1070);
 
             const link = document.createElement("a");
-            link.download = "my-10-second-masterpiece.png";
+            link.download = `10-second-masterpiece.png`;
             link.href = output.toDataURL("image/png");
             link.click();
         }
 
+        // Listeners
+        startBtn.addEventListener('click', startGame);
         downloadBtn.addEventListener('click', downloadCanvas);
+        aiGuessBtn.addEventListener('click', letAIGuess);
+        restartBtn.addEventListener('click', initGame);
+
+        window.addEventListener('load', () => {
+            setTimeout(initGame, 100);
+        });
+
     </script>
 </body>
 </html>
