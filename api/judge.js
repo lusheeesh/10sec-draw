@@ -13,22 +13,25 @@ export default async function handler(req, res) {
     const apiKey = process.env.OPENROUTER_API_KEY;
 
     if (!apiKey) {
-        return res.status(500).json({ error: 'Missing OPENROUTER_API_KEY in Vercel settings.' });
+        return res.status(500).json({ error: 'Missing OPENROUTER_API_KEY.' });
     }
     
     if (!image) {
-        return res.status(400).json({ error: 'Image data missing from request.' });
+        return res.status(400).json({ error: 'Image data missing.' });
     }
 
     const sysPrompt = `You are a sarcastic art judge evaluating a drawing made in 10 seconds. The prompt is SECRET. NEVER reveal it. Return ONLY valid JSON. Format: {"rating": 8.5, "commentary": "sarcastic friendly review"}`;
 
+    // Updated list of active free OpenRouter vision models
     const models = [
         'meta-llama/llama-3.2-11b-vision-instruct:free',
-        'google/gemini-2.0-flash-exp:free',
-        'qwen/qwen-2-vl-7b-instruct:free'
+        'meta-llama/llama-3.2-90b-vision-instruct:free',
+        'google/gemini-2.0-flash-lite-preview-02-05:free',
+        'google/gemini-2.0-pro-exp-02-05:free',
+        'google/gemini-2.0-flash-exp:free'
     ];
 
-    let lastError = "All models failed.";
+    let errorLog = [];
 
     for (const model of models) {
         try {
@@ -57,40 +60,44 @@ export default async function handler(req, res) {
 
             if (!response.ok) {
                 const errData = await response.text();
-                lastError = `${model} failed: ${errData.substring(0, 100)}`;
-                continue;
+                // Save the exact reason this specific model failed
+                errorLog.push(`[${model} failed: ${response.status} - ${errData.substring(0, 80)}]`);
+                continue; 
             }
 
             const data = await response.json();
             
             if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-                lastError = `${model} returned invalid data.`;
+                errorLog.push(`[${model} returned empty/invalid response]`);
                 continue;
             }
 
             const content = data.choices[0].message.content;
             
-            // Clean up Markdown and AI <thinking> tags
             const cleaned = content.replace(/```json/gi, "").replace(/```/g, "").trim();
             const start = cleaned.indexOf("{");
             const end = cleaned.lastIndexOf("}");
             
             if (start === -1 || end === -1) {
-                lastError = `${model} failed to return JSON format.`;
+                errorLog.push(`[${model} failed to format JSON: ${content.substring(0, 30)}]`);
                 continue;
             }
 
             const result = JSON.parse(cleaned.slice(start, end + 1));
 
             if (result.rating !== undefined && result.commentary) {
+                // Success! Return immediately.
                 return res.status(200).json(result);
+            } else {
+                errorLog.push(`[${model} returned JSON but missed rating/commentary keys]`);
             }
 
         } catch (e) {
-            lastError = `Error catching model: ${e.message}`;
+            errorLog.push(`[${model} crashed: ${e.message}]`);
             continue;
         }
     }
 
-    return res.status(503).json({ error: lastError });
+    // If we reach this point, all 5 models failed. Print the combined log so we know exactly why.
+    return res.status(503).json({ error: `AI Error Log: ${errorLog.join(" ")}` });
 }
