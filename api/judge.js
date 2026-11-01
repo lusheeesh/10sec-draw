@@ -13,19 +13,18 @@ export default async function handler(req, res) {
     const apiKey = process.env.OPENROUTER_API_KEY;
 
     if (!apiKey) {
-        console.error("Missing OPENROUTER_API_KEY");
-        return res.status(500).json({ error: 'API key is missing in Vercel variables.' });
+        return res.status(500).json({ error: 'Missing OPENROUTER_API_KEY in Vercel settings.' });
     }
     
     if (!image) {
-        return res.status(400).json({ error: 'Image data missing.' });
+        return res.status(400).json({ error: 'Image data missing from request.' });
     }
 
     const sysPrompt = `You are a sarcastic art judge evaluating a drawing made in 10 seconds. The prompt is SECRET. NEVER reveal it. Return ONLY valid JSON. Format: {"rating": 8.5, "commentary": "sarcastic friendly review"}`;
 
     const models = [
-        'google/gemini-2.0-flash-exp:free',
         'meta-llama/llama-3.2-11b-vision-instruct:free',
+        'google/gemini-2.0-flash-exp:free',
         'qwen/qwen-2-vl-7b-instruct:free'
     ];
 
@@ -33,8 +32,6 @@ export default async function handler(req, res) {
 
     for (const model of models) {
         try {
-            console.log(`Trying model: ${model}`);
-            
             const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
                 method: 'POST',
                 headers: {
@@ -51,7 +48,7 @@ export default async function handler(req, res) {
                             role: 'user',
                             content: [
                                 { type: 'text', text: `Secret challenge: ${prompt}. Judge this.` },
-                                { type: 'image_url', image_url: { url: `data:image/png;base64,${image}` } }
+                                { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${image}` } }
                             ]
                         }
                     ]
@@ -59,23 +56,27 @@ export default async function handler(req, res) {
             });
 
             if (!response.ok) {
-                lastError = `Status ${response.status}`;
+                const errData = await response.text();
+                lastError = `${model} failed: ${errData.substring(0, 100)}`;
                 continue;
             }
 
             const data = await response.json();
             
             if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+                lastError = `${model} returned invalid data.`;
                 continue;
             }
 
             const content = data.choices[0].message.content;
-
+            
+            // Clean up Markdown and AI <thinking> tags
             const cleaned = content.replace(/```json/gi, "").replace(/```/g, "").trim();
             const start = cleaned.indexOf("{");
             const end = cleaned.lastIndexOf("}");
             
             if (start === -1 || end === -1) {
+                lastError = `${model} failed to return JSON format.`;
                 continue;
             }
 
@@ -86,8 +87,7 @@ export default async function handler(req, res) {
             }
 
         } catch (e) {
-            console.error(`Error with model ${model}:`, e.message);
-            lastError = e.message;
+            lastError = `Error catching model: ${e.message}`;
             continue;
         }
     }
