@@ -21,7 +21,7 @@ export default async function handler(req, res) {
         'qwen/qwen-2-vl-7b-instruct:free'
     ];
 
-    const sysPrompt = `You are a sarcastic art judge evaluating a drawing made in 10 seconds. The prompt is SECRET. NEVER reveal it. NEVER say the answer. You should try guessing what they actually drew. Return ONLY valid JSON in this exact format: {"rating": 8.5, "commentary": "sarcastic friendly review"}`;
+    const sysPrompt = `You are a sarcastic art judge evaluating a drawing made in 10 seconds. The prompt is SECRET. NEVER reveal it. NEVER say the answer. Return ONLY valid JSON in this exact format: {"rating": 8.5, "commentary": "sarcastic friendly review"}`;
 
     for (const model of models) {
         try {
