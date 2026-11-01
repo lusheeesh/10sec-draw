@@ -22,13 +22,13 @@ export default async function handler(req, res) {
 
     const sysPrompt = `You are a sarcastic art judge evaluating a drawing made in 10 seconds. The prompt is SECRET. NEVER reveal it. Return ONLY valid JSON. Format: {"rating": 8.5, "commentary": "sarcastic friendly review"}`;
 
-    // Updated list of active free OpenRouter vision models
+    // Updated list of CURRENT active free OpenRouter vision models (as of late 2026)
     const models = [
-        'meta-llama/llama-3.2-11b-vision-instruct:free',
-        'meta-llama/llama-3.2-90b-vision-instruct:free',
-        'google/gemini-2.0-flash-lite-preview-02-05:free',
-        'google/gemini-2.0-pro-exp-02-05:free',
-        'google/gemini-2.0-flash-exp:free'
+        'google/gemma-4-26b-a4b-it:free',
+        'google/gemma-4-31b-it:free',
+        'nvidia/nemotron-nano-12b-v2-vl:free',
+        'nvidia/nemotron-3.5-super-vl:free',
+        'inclusionai/ling-3.0-flash-vl:free'
     ];
 
     let errorLog = [];
@@ -60,7 +60,6 @@ export default async function handler(req, res) {
 
             if (!response.ok) {
                 const errData = await response.text();
-                // Save the exact reason this specific model failed
                 errorLog.push(`[${model} failed: ${response.status} - ${errData.substring(0, 80)}]`);
                 continue; 
             }
@@ -86,7 +85,6 @@ export default async function handler(req, res) {
             const result = JSON.parse(cleaned.slice(start, end + 1));
 
             if (result.rating !== undefined && result.commentary) {
-                // Success! Return immediately.
                 return res.status(200).json(result);
             } else {
                 errorLog.push(`[${model} returned JSON but missed rating/commentary keys]`);
@@ -98,6 +96,5 @@ export default async function handler(req, res) {
         }
     }
 
-    // If we reach this point, all 5 models failed. Print the combined log so we know exactly why.
     return res.status(503).json({ error: `AI Error Log: ${errorLog.join(" ")}` });
 }
