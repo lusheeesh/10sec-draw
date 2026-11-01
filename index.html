@@ -7,17 +7,17 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap');
-        
+
         body {
             font-family: 'Nunito', sans-serif;
             background-color: #f0fdf4;
             background-image: radial-gradient(#bbf7d0 1px, transparent 1px);
             background-size: 20px 20px;
-            overscroll-behavior-y: contain; 
+            overscroll-behavior-y: contain;
         }
 
         #drawingCanvas {
-            touch-action: none; 
+            touch-action: none;
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
         }
 
@@ -48,7 +48,7 @@
     </header>
 
     <main class="flex-grow flex flex-col items-center w-full max-w-3xl mx-auto px-4 pb-12">
-        
+
         <div class="w-full flex justify-between items-end mb-3 px-2">
             <div class="flex flex-col">
                 <span class="text-sm font-bold text-slate-400 uppercase tracking-wider">Draw:</span>
@@ -62,7 +62,7 @@
 
         <div class="relative w-full aspect-[4/3] md:aspect-[16/9] bg-white rounded-2xl overflow-hidden border-4 border-slate-200" id="canvasContainer">
             <canvas id="drawingCanvas" class="w-full h-full cursor-crosshair"></canvas>
-            
+
             <div id="startOverlay" class="absolute inset-0 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center z-10 transition-opacity duration-300">
                 <button id="startBtn" class="bg-green-500 hover:bg-green-600 text-white text-xl md:text-2xl font-black py-4 px-8 rounded-full shadow-[0_6px_0_#16a34a] hover:shadow-[0_4px_0_#16a34a] hover:translate-y-[2px] transition-all animate-pulse-fast">
                     Start Challenge!
@@ -90,7 +90,7 @@
 
         <div id="aiResponseContainer" class="w-full mt-6 hidden pop-in">
             <div class="bg-indigo-50 border-2 border-indigo-100 rounded-2xl p-6 md:p-8 relative w-full">
-                
+
                 <div class="absolute -top-3 left-6 bg-indigo-500 text-white text-xs font-bold px-4 py-1 rounded-full uppercase tracking-wide shadow-sm">
                     🤖 AI Judge
                 </div>
@@ -106,7 +106,7 @@
                         <div id="aiScoreValue" class="text-6xl md:text-7xl font-black text-indigo-600 my-2 tracking-tighter">--/10</div>
                         <div id="aiScoreLabel" class="text-sm font-bold text-indigo-400">Certified masterpiece?</div>
                     </div>
-                    
+
                     <div id="aiText" class="text-slate-700 text-[1.05rem] leading-relaxed font-medium">
                         <!-- AI response goes here -->
                     </div>
@@ -119,10 +119,78 @@
 
     <script>
         const prompts = [
-            "a bicycle", "a grumpy cat", "a hotdog", "an alien spaceship", 
-            "a snowman", "a guitar", "a pair of scissors", "a slice of pizza", 
-            "a coffee mug", "a palm tree", "a pineapple", "a spider", 
-            "a wizard hat", "a turtle", "a ghost", "a hamburger"
+            // ── Animals ──────────────────────────────────────────
+            "a cat", "a grumpy cat", "a sleeping cat", "a dog", "a dog with a bone",
+            "a bird", "a fish", "a shark", "a dolphin", "a whale", "an octopus",
+            "a crab", "a spider", "a butterfly", "a bee", "a snail", "a turtle",
+            "a frog", "a snake", "a lizard", "an elephant", "a giraffe", "a lion",
+            "a tiger", "a bear", "a panda", "a koala", "a monkey", "a penguin",
+            "an owl", "a chicken", "a duck", "a pig", "a cow", "a horse", "a rabbit",
+            "a mouse", "a fox", "a wolf", "a deer", "a camel", "a dinosaur",
+            "a dragon", "a unicorn", "a dinosaur wearing a hat",
+
+            // ── Food & Drink ─────────────────────────────────────
+            "a hotdog", "a slice of pizza", "a whole pizza", "a hamburger", "a taco",
+            "a burrito", "a sandwich", "a donut", "a cupcake", "a cake", "a cookie",
+            "an ice cream cone", "a popsicle", "a lollipop", "a pretzel",
+            "a popcorn bucket", "a coffee mug", "a teacup", "a wine glass",
+            "a beer bottle", "a soda can", "a slice of cheese", "an apple",
+            "a banana", "a pineapple", "a strawberry", "a watermelon slice",
+            "a bunch of grapes", "a cherry", "a carrot", "a broccoli", "an eggplant",
+            "a mushroom", "a chicken leg", "a fried egg", "a sushi roll",
+            "a bowl of ramen", "a birthday cake with candles",
+
+            // ── Objects & Vehicles ───────────────────────────────
+            "a bicycle", "a motorcycle", "a car", "a truck", "a bus", "a train",
+            "an airplane", "a helicopter", "a rocket", "a UFO", "an alien spaceship",
+            "a boat", "a sailboat", "a submarine", "a skateboard", "a pair of scissors",
+            "a pencil", "a pen", "a paintbrush", "a book", "an open book", "a laptop",
+            "a smartphone", "a camera", "a television", "a radio", "a pair of headphones",
+            "a microphone", "a guitar", "a drum set", "a piano", "a violin",
+            "a trumpet", "a clock", "a wristwatch", "an alarm clock", "a lightbulb",
+            "a candle", "a lamp", "a key", "a padlock", "a hammer", "a wrench",
+            "a screwdriver", "a toolbox", "a magnifying glass", "a pair of glasses",
+            "sunglasses", "a hat", "a wizard hat", "a crown", "a scarf",
+            "a pair of shoes", "a sneaker", "a boot", "a sock", "a glove",
+            "an umbrella", "a backpack", "a suitcase", "a wallet", "a credit card",
+            "a coin", "a dollar bill", "a piggy bank", "a treasure chest", "a map",
+            "a compass", "a telescope", "a microscope", "a toothbrush",
+            "a tube of toothpaste", "a bar of soap", "a towel", "a mirror",
+            "a balloon", "a kite", "a paper airplane", "a rubber duck",
+            "a teddy bear", "a toy robot", "a game controller", "a chess piece",
+            "a deck of cards", "a pair of dice", "a dartboard", "a bowling pin",
+            "a trophy", "a medal", "a ring", "a diamond", "a heart",
+            "a broken heart", "a smiley face", "a fidget spinner",
+
+            // ── Nature ───────────────────────────────────────────
+            "a palm tree", "a pine tree", "a cactus", "a sunflower", "a rose",
+            "a tulip", "a tree stump", "a leaf", "a four-leaf clover", "a mountain",
+            "a volcano", "a waterfall", "a rainbow", "a cloud", "the sun",
+            "the moon", "a star", "a planet", "a galaxy", "a snowflake",
+            "a tornado", "a lightning bolt", "a fire", "a wave", "an island",
+            "a campfire",
+
+            // ── Buildings & Places ───────────────────────────────
+            "a house", "a haunted house", "a castle", "a tower", "a bridge",
+            "a lighthouse", "a windmill", "a tent", "an igloo", "a sandcastle",
+            "a pyramid", "the Eiffel Tower", "a church", "a school", "a hospital",
+            "a bank", "a skyscraper", "a treehouse", "a mailbox", "a fence",
+
+            // ── People & Characters ──────────────────────────────
+            "a stick figure", "a ghost", "a zombie", "a vampire", "a witch",
+            "a wizard", "a pirate", "a knight", "an astronaut", "a robot",
+            "an alien", "a mermaid", "a fairy", "a superhero", "a princess",
+            "a king", "a queen", "a cowboy", "a chef", "a doctor",
+            "a police officer", "a firefighter", "a baby", "a ninja",
+            "a samurai", "a snowman", "a scarecrow", "a skeleton", "Santa Claus",
+            "the Easter Bunny", "a leprechaun",
+
+            // ── Misc / Fun ───────────────────────────────────────
+            "a heart with wings", "a smiley face with sunglasses", "a question mark",
+            "an exclamation point", "a peace sign", "a thumbs up", "a starburst",
+            "a skull", "a bomb", "a target", "an arrow", "a music note",
+            "a swirl", "a spiral", "a maze", "a checkerboard", "a striped shirt",
+            "a top hat", "a magnifying glass with a footprint"
         ];
 
         let currentPrompt = "";
@@ -130,26 +198,26 @@
         let timerInterval = null;
         let isDrawing = false;
         let gameState = 'initial';
-        
+
         let currentRating = null;
         let currentReview = "";
         let ratingIsProvisional = false;
-        
+
         const canvas = document.getElementById('drawingCanvas');
         const ctx = canvas.getContext('2d');
         const canvasContainer = document.getElementById('canvasContainer');
         const promptDisplay = document.getElementById('promptDisplay');
         const timerDisplay = document.getElementById('timerDisplay');
-        
+
         const startOverlay = document.getElementById('startOverlay');
         const endedOverlay = document.getElementById('endedOverlay');
-        
+
         const startBtn = document.getElementById('startBtn');
         const downloadBtn = document.getElementById('downloadBtn');
         const aiGuessBtn = document.getElementById('aiGuessBtn');
         const restartBtn = document.getElementById('restartBtn');
         const postGameControls = document.getElementById('postGameControls');
-        
+
         const aiResponseContainer = document.getElementById('aiResponseContainer');
         const aiLoading = document.getElementById('aiLoading');
         const aiResultContent = document.getElementById('aiResultContent');
@@ -159,16 +227,16 @@
 
         function resizeCanvas() {
             const rect = canvasContainer.getBoundingClientRect();
-            
+
             if (gameState !== 'playing') {
                 canvas.width = rect.width;
                 canvas.height = rect.height;
-                
+
                 ctx.lineCap = 'round';
                 ctx.lineJoin = 'round';
                 ctx.lineWidth = 6;
-                ctx.strokeStyle = '#0f172a'; 
-                
+                ctx.strokeStyle = '#0f172a';
+
                 fillWhiteBackground();
             }
         }
@@ -184,7 +252,7 @@
             const rect = canvas.getBoundingClientRect();
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
             const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            
+
             return {
                 x: (clientX - rect.left) * (canvas.width / rect.width),
                 y: (clientY - rect.top) * (canvas.height / rect.height)
@@ -224,7 +292,6 @@
         canvas.addEventListener('touchmove', draw, { passive: false });
         canvas.addEventListener('touchend', stopDrawing, { passive: false });
 
-
         function pickRandomPrompt() {
             const index = Math.floor(Math.random() * prompts.length);
             return prompts[index];
@@ -236,21 +303,21 @@
             promptDisplay.textContent = currentPrompt;
             timeLeft = 10;
             updateTimerDisplay();
-            
+
             gameState = 'initial';
             currentRating = null;
             currentReview = "";
             ratingIsProvisional = false;
-            
+
             startOverlay.classList.remove('hidden');
             endedOverlay.classList.add('hidden');
             postGameControls.classList.add('hidden');
             postGameControls.classList.remove('flex');
-            
+
             aiResponseContainer.classList.add('hidden');
             aiResultContent.classList.add('hidden');
             aiResultContent.classList.remove('flex');
-            
+
             timerDisplay.classList.remove('text-red-500', 'animate-pulse');
             timerDisplay.classList.add('text-green-500');
             canvas.classList.add('cursor-crosshair');
@@ -260,17 +327,17 @@
         function startGame() {
             gameState = 'playing';
             startOverlay.classList.add('hidden');
-            fillWhiteBackground(); 
-            
+            fillWhiteBackground();
+
             timerInterval = setInterval(() => {
                 timeLeft--;
                 updateTimerDisplay();
-                
+
                 if (timeLeft <= 3) {
                     timerDisplay.classList.remove('text-green-500');
                     timerDisplay.classList.add('text-red-500', 'animate-pulse');
                 }
-                
+
                 if (timeLeft <= 0) {
                     endGame();
                 }
@@ -285,12 +352,12 @@
             clearInterval(timerInterval);
             gameState = 'ended';
             isDrawing = false;
-            
+
             endedOverlay.classList.remove('hidden');
             canvas.classList.remove('cursor-crosshair');
             canvas.classList.add('cursor-not-allowed');
             timerDisplay.classList.remove('animate-pulse');
-            
+
             postGameControls.classList.remove('hidden');
             postGameControls.classList.add('flex');
         }
@@ -307,14 +374,14 @@
         async function letAIGuess() {
             aiGuessBtn.disabled = true;
             aiGuessBtn.classList.add('opacity-50', 'cursor-not-allowed');
-            
+
             aiResponseContainer.classList.remove('hidden');
             aiLoading.classList.remove('hidden');
             aiLoading.classList.add('flex');
-            
+
             aiResultContent.classList.add('hidden');
             aiResultContent.classList.remove('flex');
-            
+
             currentRating = null;
             currentReview = "";
             ratingIsProvisional = false;
@@ -322,7 +389,7 @@
             // Compress image aggressively to avoid Vercel/API payload limits
             const MAX_SIZE = 512;
             const scale = Math.min(MAX_SIZE / canvas.width, MAX_SIZE / canvas.height, 1);
-            
+
             const tempCanvas = document.createElement('canvas');
             tempCanvas.width = canvas.width * scale;
             tempCanvas.height = canvas.height * scale;
@@ -330,10 +397,9 @@
             tCtx.fillStyle = '#ffffff';
             tCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
             tCtx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
-            
-            // Generate tiny JPEG instead of massive PNG
+
             const base64Data = tempCanvas.toDataURL('image/jpeg', 0.6).split(',')[1];
-            
+
             try {
                 const response = await fetch("/api/judge", {
                     method: "POST",
@@ -346,19 +412,12 @@
                 if (!response.ok) {
                     throw new Error(result.error || "Server failed to respond correctly.");
                 }
-                
-                currentRating = Math.round(result.rating * 10) / 10;
-                let review = result.commentary;
 
-                if (currentPrompt) {
-                    const escaped = currentPrompt.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-                    review = review.replace(new RegExp(escaped, "gi"), "[REDACTED]");
-                }
-                currentReview = review;
+                currentRating = Math.round(result.rating * 10) / 10;
+                currentReview = result.commentary;
 
             } catch (error) {
                 currentRating = 0;
-                // THIS WILL NOW PRINT THE EXACT REASON IT FAILED
                 currentReview = `Connection failed! Reason: ${error.message}`;
                 ratingIsProvisional = true;
             }
@@ -366,13 +425,13 @@
             aiScoreValue.textContent = `${currentRating}/10`;
             aiScoreLabel.textContent = ratingIsProvisional ? "⏳ ERROR" : getRatingLabel(currentRating);
             aiText.textContent = currentReview;
-            
+
             aiLoading.classList.add('hidden');
             aiLoading.classList.remove('flex');
-            
+
             aiResultContent.classList.remove('hidden');
             aiResultContent.classList.add('flex');
-            
+
             aiGuessBtn.disabled = false;
             aiGuessBtn.classList.remove('opacity-50', 'cursor-not-allowed');
         }
@@ -418,7 +477,7 @@
             oCtx.fillText("⏱️ THE 10-SECOND SKETCH CHALLENGE", 600, 190);
 
             roundedBox(oCtx, 105, 230, 990, 580, 20, "#f8fafc");
-            
+
             oCtx.strokeStyle = "#e2e8f0";
             oCtx.lineWidth = 4;
             oCtx.strokeRect(105, 230, 990, 580);
