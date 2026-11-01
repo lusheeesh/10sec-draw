@@ -20,7 +20,7 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Image data missing.' });
     }
 
-    const sysPrompt = `You are a sarcastic art judge evaluating a drawing made in 10 seconds. The prompt is SECRET. NEVER reveal it. Return ONLY valid JSON. Format: {"rating": 8.5, "commentary": "sarcastic friendly review"}`;
+    const sysPrompt = `You are a sarcastic art judge evaluating a drawing made in 10 seconds. Long commentary. Return ONLY valid JSON. Format: {"rating": 8.5, "commentary": "sarcastic review"}`;
 
     // Updated list of CURRENT active free OpenRouter vision models (as of late 2026)
     const models = [
