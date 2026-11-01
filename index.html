@@ -6,7 +6,6 @@
     <title>10-Second Drawing Challenge</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Custom Fonts & Base Styles */
         @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap');
         
         body {
@@ -14,16 +13,14 @@
             background-color: #f0fdf4;
             background-image: radial-gradient(#bbf7d0 1px, transparent 1px);
             background-size: 20px 20px;
-            overscroll-behavior-y: contain; /* Prevent pull-to-refresh on mobile */
+            overscroll-behavior-y: contain; 
         }
 
-        /* Canvas Styles */
         #drawingCanvas {
-            touch-action: none; /* Prevent scrolling when drawing on touch devices */
+            touch-action: none; 
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
         }
 
-        /* Animations */
         @keyframes pulse-fast {
             0%, 100% { transform: scale(1); }
             50% { transform: scale(1.05); }
@@ -43,7 +40,6 @@
 </head>
 <body class="min-h-screen flex flex-col text-slate-800">
 
-    <!-- Header -->
     <header class="w-full p-4 text-center">
         <h1 class="text-3xl md:text-4xl font-black text-green-600 drop-shadow-sm tracking-tight">
             ⏱️ 10-Second Sketch
@@ -51,10 +47,8 @@
         <p class="text-slate-500 font-bold mt-1">Ready, Set, Draw!</p>
     </header>
 
-    <!-- Main Game Area -->
     <main class="flex-grow flex flex-col items-center w-full max-w-3xl mx-auto px-4 pb-12">
         
-        <!-- Game Info Bar -->
         <div class="w-full flex justify-between items-end mb-3 px-2">
             <div class="flex flex-col">
                 <span class="text-sm font-bold text-slate-400 uppercase tracking-wider">Draw:</span>
@@ -66,11 +60,9 @@
             </div>
         </div>
 
-        <!-- Canvas Container -->
         <div class="relative w-full aspect-[4/3] md:aspect-[16/9] bg-white rounded-2xl overflow-hidden border-4 border-slate-200" id="canvasContainer">
             <canvas id="drawingCanvas" class="w-full h-full cursor-crosshair"></canvas>
             
-            <!-- Start Overlay -->
             <div id="startOverlay" class="absolute inset-0 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center z-10 transition-opacity duration-300">
                 <button id="startBtn" class="bg-green-500 hover:bg-green-600 text-white text-xl md:text-2xl font-black py-4 px-8 rounded-full shadow-[0_6px_0_#16a34a] hover:shadow-[0_4px_0_#16a34a] hover:translate-y-[2px] transition-all animate-pulse-fast">
                     Start Challenge!
@@ -78,11 +70,9 @@
                 <p class="mt-4 text-slate-600 font-bold text-center px-6">You will have exactly 10 seconds.<br>No undo. No eraser. Good luck.</p>
             </div>
 
-            <!-- Ended Overlay (Subtle tint) -->
             <div id="endedOverlay" class="absolute inset-0 bg-slate-900/5 z-10 hidden pointer-events-none transition-opacity duration-300"></div>
         </div>
 
-        <!-- Post Game Controls -->
         <div id="postGameControls" class="w-full mt-6 hidden flex-col sm:flex-row gap-4 justify-center pop-in">
             <button id="downloadBtn" class="flex-1 bg-white border-2 border-slate-200 hover:border-slate-300 text-slate-700 font-bold py-3 px-6 rounded-xl shadow-sm transition-all flex items-center justify-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
@@ -98,7 +88,6 @@
             </button>
         </div>
 
-        <!-- AI Response Box -->
         <div id="aiResponseContainer" class="w-full mt-6 hidden pop-in">
             <div class="bg-indigo-50 border-2 border-indigo-100 rounded-2xl p-6 md:p-8 relative w-full">
                 
@@ -118,7 +107,6 @@
                         <div id="aiScoreLabel" class="text-sm font-bold text-indigo-400">Certified masterpiece?</div>
                     </div>
                     
-                    <!-- Box expands freely now to fit the text -->
                     <div id="aiText" class="text-slate-700 text-[1.05rem] leading-relaxed font-medium">
                         <!-- AI response goes here -->
                     </div>
@@ -130,9 +118,6 @@
     </main>
 
     <script>
-        /**
-         * 10-Second Drawing Challenge Logic
-         */
         const prompts = [
             "a bicycle", "a grumpy cat", "a hotdog", "an alien spaceship", 
             "a snowman", "a guitar", "a pair of scissors", "a slice of pizza", 
@@ -140,7 +125,6 @@
             "a wizard hat", "a turtle", "a ghost", "a hamburger"
         ];
 
-        // State
         let currentPrompt = "";
         let timeLeft = 10;
         let timerInterval = null;
@@ -151,7 +135,6 @@
         let currentReview = "";
         let ratingIsProvisional = false;
         
-        // DOM Elements
         const canvas = document.getElementById('drawingCanvas');
         const ctx = canvas.getContext('2d');
         const canvasContainer = document.getElementById('canvasContainer');
@@ -173,8 +156,6 @@
         const aiScoreValue = document.getElementById('aiScoreValue');
         const aiScoreLabel = document.getElementById('aiScoreLabel');
         const aiText = document.getElementById('aiText');
-
-        // --- Canvas Setup & Drawing Logic ---
 
         function resizeCanvas() {
             const rect = canvasContainer.getBoundingClientRect();
@@ -243,7 +224,6 @@
         canvas.addEventListener('touchmove', draw, { passive: false });
         canvas.addEventListener('touchend', stopDrawing, { passive: false });
 
-        // --- Game Flow Logic ---
 
         function pickRandomPrompt() {
             const index = Math.floor(Math.random() * prompts.length);
@@ -315,8 +295,6 @@
             postGameControls.classList.add('flex');
         }
 
-        // --- Post Game Actions ---
-
         function getRatingLabel(score) {
             if (score >= 9) return "🏆 Legendary masterpiece!";
             if (score >= 8) return "🌟 Absolutely fantastic!";
@@ -341,16 +319,20 @@
             currentReview = "";
             ratingIsProvisional = false;
 
-            // Make sure background is perfectly white for the AI API
+            // Compress image aggressively to avoid Vercel/API payload limits
+            const MAX_SIZE = 512;
+            const scale = Math.min(MAX_SIZE / canvas.width, MAX_SIZE / canvas.height, 1);
+            
             const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = canvas.width;
-            tempCanvas.height = canvas.height;
+            tempCanvas.width = canvas.width * scale;
+            tempCanvas.height = canvas.height * scale;
             const tCtx = tempCanvas.getContext('2d');
             tCtx.fillStyle = '#ffffff';
             tCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-            tCtx.drawImage(canvas, 0, 0);
+            tCtx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
             
-            const base64Data = tempCanvas.toDataURL('image/png').split(',')[1];
+            // Generate tiny JPEG instead of massive PNG
+            const base64Data = tempCanvas.toDataURL('image/jpeg', 0.6).split(',')[1];
             
             try {
                 const response = await fetch("/api/judge", {
@@ -359,13 +341,15 @@
                     body: JSON.stringify({ image: base64Data, prompt: currentPrompt })
                 });
 
-                if (!response.ok) throw new Error("API Error");
                 const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.error || "Server failed to respond correctly.");
+                }
                 
                 currentRating = Math.round(result.rating * 10) / 10;
                 let review = result.commentary;
 
-                // Censor the actual prompt so they can't cheat on the share card
                 if (currentPrompt) {
                     const escaped = currentPrompt.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
                     review = review.replace(new RegExp(escaped, "gi"), "[REDACTED]");
@@ -373,13 +357,14 @@
                 currentReview = review;
 
             } catch (error) {
-                currentRating = 5;
-                currentReview = "The AI judge couldn't connect right now! The servers refuse to process this drawing. You get a temporary score.";
+                currentRating = 0;
+                // THIS WILL NOW PRINT THE EXACT REASON IT FAILED
+                currentReview = `Connection failed! Reason: ${error.message}`;
                 ratingIsProvisional = true;
             }
 
             aiScoreValue.textContent = `${currentRating}/10`;
-            aiScoreLabel.textContent = ratingIsProvisional ? "⏳ Provisional score" : getRatingLabel(currentRating);
+            aiScoreLabel.textContent = ratingIsProvisional ? "⏳ ERROR" : getRatingLabel(currentRating);
             aiText.textContent = currentReview;
             
             aiLoading.classList.add('hidden');
@@ -392,7 +377,6 @@
             aiGuessBtn.classList.remove('opacity-50', 'cursor-not-allowed');
         }
 
-        // Share Card Builder
         function roundedBox(ctx, x, y, w, h, radius, color) {
             ctx.beginPath();
             ctx.roundRect(x, y, w, h, radius);
@@ -410,11 +394,9 @@
             output.width = 1200;
             output.height = 1150;
 
-            // Background
             oCtx.fillStyle = "#f0fdf4";
             oCtx.fillRect(0, 0, output.width, output.height);
 
-            // Dots pattern
             for (let x = 20; x < 1200; x += 40) {
                 for (let y = 20; y < 1150; y += 40) {
                     oCtx.fillStyle = "#bbf7d0";
@@ -424,7 +406,6 @@
                 }
             }
 
-            // Main White Card
             roundedBox(oCtx, 55, 45, 1090, 1060, 35, "#ffffff");
 
             oCtx.textAlign = "center";
@@ -436,7 +417,6 @@
             oCtx.font = "700 27px Nunito, sans-serif";
             oCtx.fillText("⏱️ THE 10-SECOND SKETCH CHALLENGE", 600, 190);
 
-            // Drawing Area border
             roundedBox(oCtx, 105, 230, 990, 580, 20, "#f8fafc");
             
             oCtx.strokeStyle = "#e2e8f0";
@@ -458,7 +438,6 @@
 
             oCtx.drawImage(tempForExport, 600 - drawWidth / 2, 520 - drawHeight / 2, drawWidth, drawHeight);
 
-            // Rating Badge
             roundedBox(oCtx, 105, 835, 990, 155, 22, "#eef2ff");
 
             oCtx.fillStyle = "#6366f1";
@@ -483,7 +462,6 @@
             link.click();
         }
 
-        // Listeners
         startBtn.addEventListener('click', startGame);
         downloadBtn.addEventListener('click', downloadCanvas);
         aiGuessBtn.addEventListener('click', letAIGuess);
@@ -492,7 +470,6 @@
         window.addEventListener('load', () => {
             setTimeout(initGame, 100);
         });
-
     </script>
 </body>
 </html>
